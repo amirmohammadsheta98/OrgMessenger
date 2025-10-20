@@ -11,18 +11,18 @@
 <RadzenStack class="rz-p-0 ">
 
     <RadzenChat @ref="eventsChat"
-                Title="@Contact"
-                CurrentUserId="@currentUserId"
-                Users="@users"
-                Messages="@messages"
-                MessagesChanged="@OnMessagesChanged"
-                Placeholder="پیام خود را بنویسید..."
-                Style="height: 500px;"
-                MessageAdded="@OnMessageAdded"
-                MessageSent="@OnMessageSent"
-                UserAdded="@OnUserAdded"
-                UserRemoved="@OnUserRemoved"
-                ChatCleared="@OnChatCleared" />
+    Title="@Contact"
+    CurrentUserId="@currentUserId"
+    Users="@users"
+    Messages="@messages"
+    MessagesChanged="@OnMessagesChanged"
+    Placeholder="پیام خود را بنویسید..."
+    Style="height: 500px;"
+    MessageAdded="@OnMessageAdded"
+    MessageSent="@OnMessageSent"
+    UserAdded="@OnUserAdded"
+    UserRemoved="@OnUserRemoved"
+    ChatCleared="@OnChatCleared" />
 </RadzenStack>
 
 
@@ -55,7 +55,7 @@
             new ChatUser { Id = "2", Name = Contact, Color = "#388e3c" },
         });
 
-       
+
 
         SocketEventDispatcher.Subscribe("privateChat", OnPrivateChat);
 
@@ -87,7 +87,7 @@
                 }
 
             }
-
+            StateHasChanged();
         }
     }
 

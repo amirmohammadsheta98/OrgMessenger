@@ -38,7 +38,6 @@ namespace OrgMessenger.Services.ApiReq
             {
                 var json = await status.Content.ReadAsStringAsync();
 
-                // مپ کردن (دی‌سریالایز) محتوای JSON به DTO
                 var res = JsonConvert.DeserializeObject<UserChatHistoryWeb>(json);
                 return res;
             }
