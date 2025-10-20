@@ -1,0 +1,66 @@
+﻿@using OrgMessenger.DTO
+@using OrgMessenger.Services.Sockets
+@using System.Text.Json
+@using Shop.Services
+@inject SocketService Socket
+@inject AuthService authService;
+
+@if (Info is null)
+{
+    <p style="color:gray">در حال دریافت اطلاعات کاربر...</p>
+}
+else
+{
+    <div class="rz-p-0 rz-p-md-12">
+        <RadzenCard Variant="Variant.Filled" class="rz-my-12 rz-mx-auto" Style="max-width: 420px">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+                <RadzenImage Path="/Images/Profile.jpg" Style="width: 100px; height: 100px; border-radius: 50%;" />
+                <RadzenStack Gap="0">
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">نام کاربری</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@Info.UserName</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">شناسه کاربر</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@Info.UserId</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">شناسه سوکت</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@Info.SocketId</b></RadzenText>
+
+                    <button class="btn btn-outline-success mt-2" @onclick="LogOut">خروج از حساب</button>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+ 
+}
+@code {
+    private MyInfoDto? Info;
+
+
+    protected override void OnInitialized()
+    {
+        SocketEventDispatcher.Subscribe("myInfo", OnMyInfo);
+    }
+
+    private void OnMyInfo(string data)
+    {
+        InvokeAsync(() =>
+    {
+        Info = JsonSerializer.Deserialize<MyInfoDto>(data);
+        StateHasChanged();
+    });
+
+
+        // Info = JsonSerializer.Deserialize<MyInfoDto>(data); ;
+        // StateHasChanged();
+        // Console.WriteLine($"📩 Private chat: {data}");
+    }
+    public async Task LogOut()
+    {
+        await authService.Logout();
+    }
+
+    // [JSInvokable]
+    // public void OnMyInfoReceived(MyInfoDto data)
+    // {
+    //     Info = data;
+    //     StateHasChanged();
+    // }
+}

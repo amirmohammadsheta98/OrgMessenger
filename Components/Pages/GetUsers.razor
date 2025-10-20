@@ -1,0 +1,72 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.IdentityModel.JsonWebTokens
+@using OrgMessenger.DTO
+@using OrgMessenger.Services.Sockets
+@using Shop.Security
+@using Shop.Services
+@using Shop.Services.Requests
+@using System.Security.Claims
+@using System.Text.Json
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject SocketService Socket
+@inject IJSRuntime JS
+@inject AccessTokenService accessTokenService;
+@inject ResourceService resourceService;
+@inject AuthService authService;
+@inject JWTAuthenticationStateProvider authStateProvider;
+ @foreach (var contact in list)
+{
+    <RadzenPanelMenuItem Path="@($"/Chat?Contact={contact.Username}")" Text="@contact.Username" Icon="contacts_product" />
+}
+@code {
+    private List<UserItemDto>? list = new();
+
+    protected override void OnInitialized()
+    {
+        SocketEventDispatcher.Subscribe("getUsers", OnUsers);
+    }
+
+    private void OnUsers(string data)
+    {
+        InvokeAsync(() =>
+    {
+        list = JsonSerializer.Deserialize<List<UserItemDto>>(data);
+        StateHasChanged();
+    });
+
+
+    }
+}
+
+
+
+
+
+
+    @* // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         dotNetRef = DotNetObjectReference.Create(this);
+    //         var token = await accessTokenService.GetToken();
+    //         await JS.InvokeVoidAsync("connectSocket", token, dotNetRef);
+    //     }
+    // }
+
+    // [JSInvokable]
+    // public void OnGetUsersReceived(List<UserItemDto>
+    data)
+    // {
+    //     list = data;
+    //     StateHasChanged();
+    // }
+
+    // public async ValueTask DisposeAsync()
+    // {
+    //     await JS.InvokeVoidAsync("disconnectSocket");
+    //     dotNetRef?.Dispose();
+    // }
+ *@
+

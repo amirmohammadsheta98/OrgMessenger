@@ -1,0 +1,53 @@
+﻿@page "/login"
+@using OrgMessenger.Components.Layout
+@using Shop.Services
+@layout AuthLayout_
+
+@rendermode InteractiveServer
+
+@inject AuthService AuthService
+@inject NavigationManager nav
+
+
+<RadzenCard Style="max-width:400px; margin:10% auto; padding:20px">
+    <div style="display: flex; align-items: center;">
+        <img src="/Images/pricrIcon.png" alt="لوگو" style="height: 32px; margin-left: 10px;" />
+        <RadzenLabel Text="پیام رسان سازمانی تل چت" />
+    </div>
+    <h5 class="pt-3 mb-4 font-weight-bold">ورود به حساب </h5>
+
+    <RadzenTextBox @bind-Value="Email" Placeholder="نام کاربری" Style="width:100%" />
+    <RadzenPassword @bind-Value="Password" Placeholder="کلمه عبور" Style="width:100%; margin-top:10px;" />
+
+    <RadzenButton Text="ورود" Click="OnLogin" Style="margin-top:20px; width:100%;" ButtonStyle="ButtonStyle.Primary" />
+
+    @* @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <RadzenAlert Severity="AlertSeverity.Error" Style="margin-top:15px;">
+            @ErrorMessage
+        </RadzenAlert>
+    } *@
+</RadzenCard>
+
+@* <div class="container">
+    <input type="text" @bind-value="Email" class="form-control" placeholder="Email" required autofocus/>
+    <input type="password" @bind-value="Password" class="form-control" placeholder="Password" required autofocus/>
+    <button class="btn btn-primary" @onclick="OnLogin">Sign In</button>
+</div> *@
+
+
+
+
+
+@code {
+    public string Email{ get; set; }
+    public string Password{ get; set; }
+
+    private async Task OnLogin()
+    {
+        var status = await AuthService.Login(Email, Password);
+        if(status){
+            nav.NavigateTo("/");
+        }
+    }
+}

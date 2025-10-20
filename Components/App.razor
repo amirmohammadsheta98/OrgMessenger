@@ -1,0 +1,43 @@
+﻿
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+
+
+    <RadzenTheme Theme="Material" @rendermode="InteractiveServer" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="OrgMessenger.styles.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="_content/Blazor_PersianDatePickerZO/AppDatePickerZeroOne.css" rel="stylesheet" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body dir="rtl">
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+   
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
+    <script src="_content/Blazor_PersianDatePickerZO/AppDatePickerZeroOne.js"></script>
+    <script src="/js/cookies.js"></script>
+    <script type="module" src="/js/socket.js"></script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,137 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.IdentityModel.JsonWebTokens
+@using Shop.Security
+@using Shop.Services
+@using Shop.Services.Requests
+@using System.Security.Claims
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject AccessTokenService accessTokenService;
+@inject ResourceService resourceService;
+@inject AuthService authService;
+@inject JWTAuthenticationStateProvider authStateProvider;
+
+
+
+
+<!-- چپ: نام کاربر و خروج -->
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
+    <AuthorizeView>
+        <RadzenButton ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" @onclick="LogOut">خروج از حساب</RadzenButton>
+
+    </AuthorizeView>
+    @* @if (user != null)
+    {
+        string fullUser = $"{user.FirstName} {user.LastName} ({@GetRole(user.Role)})";
+
+        <RadzenBadge Shade="Shade.Lighter" BadgeStyle="BadgeStyle.Warning" Text="@user.UserName" />
+        <RadzenLabel Text="@fullUser" />
+    }
+    <RadzenButton Text="خروج" Icon="logout" ButtonStyle="ButtonStyle.Danger"
+                  Click="@(() => Navigation.NavigateTo("/logout", forceLoad: true))" /> *@
+</RadzenStack>
+
+
+
+
+
+
+@* <PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+<AuthorizeView>
+    <h1>logined</h1>
+    <table>
+        <tr>
+            <td>email</td>
+            <td>@Email</td>
+        </tr>
+        <tr>
+            <td>role</td>
+            <td>@Role</td>
+        </tr>
+        <tr>
+            <td>Access Token</td>
+            <td>@Token</td>
+        </tr>
+        <tr>
+            <td>Date Time Expired</td>
+            <td>@TokenExpired</td>
+        </tr>
+        <tr>
+            <td>Date Time Now</td>
+            <td>@CurrentTime</td>
+        </tr>
+    </table>
+</AuthorizeView>
+
+<button class="btn btn-outline-success mt-2" @onclick="VerifyGetRequest">Verify</button>
+<button class="btn btn-outline-success mt-2" @onclick="LogOut">logout</button>
+<h1>
+    @if (IsVerified == true)
+    {
+        <span>Success!</span>
+    }
+    else if (IsVerified == false)
+    {
+        <span>Failed!</span>
+    }
+</h1> *@
+@code {
+    public string Email { get; set; }
+    public string Role { get; set; }
+    public string Token { get; set; }
+    public DateTime TokenExpired { get; set; }
+    public DateTime CurrentTime { get; set; }
+
+    public bool IsVerified { get; set; }
+    private Timer timer;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitialValues();
+        timer = new Timer(UpdateClock, null, 0, 1000);
+    }
+
+    public async Task InitialValues()
+    {
+        var state = await authStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            Token = await accessTokenService.GetToken();
+            Email = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+            Role = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
+
+            var expires = user.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value;
+            if (long.TryParse(expires, out var exp))
+            {
+                TokenExpired = DateTimeOffset.FromUnixTimeSeconds(exp).LocalDateTime;
+            }
+        }
+    }
+
+    public async Task LogOut()
+    {
+        await authService.Logout();
+    }
+
+    public async Task VerifyGetRequest()
+    {
+        IsVerified = await resourceService.Verify();
+        await InitialValues();
+    }
+
+    public void UpdateClock(object state)
+    {
+        CurrentTime = DateTime.Now;
+
+        InvokeAsync(StateHasChanged);
+    }
+}

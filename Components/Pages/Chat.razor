@@ -1,0 +1,174 @@
+﻿@page "/Chat"
+
+@using OrgMessenger.DTO
+@using OrgMessenger.Services.ApiReq
+@using OrgMessenger.Services.Sockets
+@using Radzen
+@using Radzen.Blazor
+@using System.Text.Json
+@inherits ComponentBase
+@inject ChatApi chatApi;
+<RadzenStack class="rz-p-0 ">
+
+    <RadzenChat @ref="eventsChat"
+                Title="@Contact"
+                CurrentUserId="@currentUserId"
+                Users="@users"
+                Messages="@messages"
+                MessagesChanged="@OnMessagesChanged"
+                Placeholder="پیام خود را بنویسید..."
+                Style="height: 500px;"
+                MessageAdded="@OnMessageAdded"
+                MessageSent="@OnMessageSent"
+                UserAdded="@OnUserAdded"
+                UserRemoved="@OnUserRemoved"
+                ChatCleared="@OnChatCleared" />
+</RadzenStack>
+
+
+@code {
+    [SupplyParameterFromQuery] public string? Contact { get; set; }
+
+
+
+    RadzenChat eventsChat;
+
+    private string currentUserId = "1";
+    private List<ChatUser> users = new();
+    private List<ChatMessage> messages = new();
+    private Random random = new();
+    private UserChatHistoryWeb history = new();
+
+
+
+
+
+
+
+
+    protected override void OnInitialized()
+    {
+        // Initialize users
+        users.AddRange(new[]
+        {
+            new ChatUser { Id = "1", Name = "من", Color = "#1976d2" },
+            new ChatUser { Id = "2", Name = Contact, Color = "#388e3c" },
+        });
+
+       
+
+        SocketEventDispatcher.Subscribe("privateChat", OnPrivateChat);
+
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            history = await chatApi.UserChatHistoryWeb();
+            var currentHistory = history.History.FirstOrDefault(u => u.Key == Contact);
+            if (currentHistory.Value != null)
+            {
+                foreach (var item in currentHistory.Value)
+                {
+                    if (item.FromUserName == Contact)
+                    {
+                        messages.AddRange(new[]
+                {
+                    new ChatMessage { Content = item.Message, UserId = "2", Timestamp = item.CreateDate },
+                });
+                    }
+                    else
+                    {
+                        messages.AddRange(new[]
+                {
+                    new ChatMessage { Content = item.Message, UserId = "1", Timestamp = item.CreateDate },
+                });
+                    }
+                }
+
+            }
+
+        }
+    }
+
+
+    private PrivateChatDto? PrivateChat;
+
+
+    private void OnPrivateChat(string data)
+    {
+        InvokeAsync(() =>
+    {
+        PrivateChat = JsonSerializer.Deserialize<PrivateChatDto>(data);
+        OnAppendToMessages(PrivateChat);
+        StateHasChanged();
+    });
+
+
+    }
+    private void OnAddUser()
+    {
+        var names = new[] { "Emma Davis", "Michael Garcia", "Sarah Martinez", "David Rodriguez", "Lisa Anderson" };
+        var colors = new[] { "#1976d2", "#388e3c", "#f57c00", "#7b1fa2", "#d32f2f", "#0288d1", "#689f38", "#ffa000" };
+
+        var newUser = new ChatUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = names[random.Next(names.Length)],
+                Color = colors[random.Next(colors.Length)]
+            };
+
+        users.Add(newUser);
+        StateHasChanged();
+    }
+
+    private void OnRemoveUser()
+    {
+        if (users.Count > 1)
+        {
+            users.RemoveAt(users.Count - 1);
+            StateHasChanged();
+        }
+    }
+
+    async Task OnMessageAdded(ChatMessage message)
+    {
+        var participant = users.FirstOrDefault(p => p.Id == message.UserId);
+        var participantName = participant?.Name ?? "Unknown";
+        PrivateChatSocketIODto Request = new();
+        Request.Data.To = Contact;
+        Request.Data.Message = message.Content;
+        Request.Data.ClientTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        var Result = await chatApi.PrivateChatSocketIO(Request);
+    }
+
+    void OnAppendToMessages(PrivateChatDto privateChatDto)
+    {
+        messages.AddRange(new[]
+        {
+            new ChatMessage { Content = PrivateChat.LastMessage, UserId = "2", Timestamp = DateTime.Now },
+            });
+    }
+
+    void OnMessageSent(ChatMessage message)
+    {
+    }
+
+    void OnUserAdded(ChatUser participant)
+    {
+    }
+
+    void OnUserRemoved(ChatUser participant)
+    {
+    }
+
+    void OnChatCleared()
+    {
+    }
+
+    void OnMessagesChanged(IEnumerable<ChatMessage> newMessages)
+    {
+        messages = newMessages.ToList();
+        StateHasChanged();
+    }
+}

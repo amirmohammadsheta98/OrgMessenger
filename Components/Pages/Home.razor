@@ -1,0 +1,117 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.IdentityModel.JsonWebTokens
+@using OrgMessenger.DTO
+@using OrgMessenger.Services.Sockets
+@using Shop.Security
+@using Shop.Services
+@using Shop.Services.Requests
+@using System.Security.Claims
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject SocketService Socket
+   @inject IJSRuntime JS
+
+@inject AccessTokenService accessTokenService;
+@inject ResourceService resourceService;
+@inject AuthService authService;
+@inject JWTAuthenticationStateProvider authStateProvider;
+
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView>
+
+    <MyInfo />
+</AuthorizeView>
+
+
+@code {
+
+    public string Email { get; set; }
+    public string Role { get; set; }
+    public string Token { get; set; }
+    public DateTime TokenExpired { get; set; }
+    public DateTime CurrentTime { get; set; }
+
+    public bool IsVerified { get; set; }
+    private Timer timer;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitialValues();
+        timer = new Timer(UpdateClock, null, 0, 1000);
+    }
+
+    public async Task InitialValues()
+    {
+        var state = await authStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            Token = await accessTokenService.GetToken();
+            Email = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+            Role = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
+
+            var expires = user.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value;
+            if (long.TryParse(expires, out var exp))
+            {
+                TokenExpired = DateTimeOffset.FromUnixTimeSeconds(exp).LocalDateTime;
+            }
+        }
+        
+
+       
+    }
+    
+
+
+
+
+    public void UpdateClock(object state)
+    {
+        CurrentTime = DateTime.Now;
+
+        InvokeAsync(StateHasChanged);
+    }
+
+
+   
+
+    private MyInfoDto? Info;
+    private DotNetObjectReference<Home>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            var token = await accessTokenService.GetToken();
+            await JS.InvokeVoidAsync("connectSocket", token, dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnEventReceived(string eventName, string data)
+    {
+        // انتقال به subscriberهای محلی
+        SocketEventDispatcher.Dispatch(eventName, data);
+    }
+
+
+    // [JSInvokable]
+    // public async Task OnMyInfoReceived(string eventName, string data)
+    // {
+    //     // انتقال به subscriberهای محلی
+    //     SocketEventDispatcher.Dispatch(eventName, data);
+    // }
+
+    // [JSInvokable]
+    // public void OnMyInfoReceived(MyInfoDto data)
+    // {
+    //     Info = data;
+    //     StateHasChanged();
+    // }
+}
