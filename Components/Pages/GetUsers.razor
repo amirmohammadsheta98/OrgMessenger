@@ -16,9 +16,19 @@
 @inject ResourceService resourceService;
 @inject AuthService authService;
 @inject JWTAuthenticationStateProvider authStateProvider;
+@inject NavigationManager nav;
  @foreach (var contact in list)
 {
-    <RadzenPanelMenuItem Path="@($"/Chat?Contact={contact.Username}")" Text="@contact.Username" Icon="contacts_product" />
+    <RadzenPanelMenuItem Text="@contact.Username"
+                         Icon="contacts_product"
+                         Click="@(() => nav.NavigateTo($"/Chat?Contact={contact.Username}"))" />
+   
+}
+@code {
+    private void NavigateToContact(string username)
+    {
+        nav.NavigateTo($"/Chat?Contact={username}");
+    }
 }
 @code {
     private List<UserItemDto>? list = new();

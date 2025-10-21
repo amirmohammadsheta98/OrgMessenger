@@ -18,10 +18,10 @@
 
 <!-- چپ: نام کاربر و خروج -->
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
-    <AuthorizeView>
+    @* <AuthorizeView>
         <RadzenButton ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" @onclick="LogOut">خروج از حساب</RadzenButton>
 
-    </AuthorizeView>
+    </AuthorizeView> *@
     @* @if (user != null)
     {
         string fullUser = $"{user.FirstName} {user.LastName} ({@GetRole(user.Role)})";

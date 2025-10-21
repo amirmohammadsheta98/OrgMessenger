@@ -8,6 +8,7 @@
 @using System.Text.Json
 @inherits ComponentBase
 @inject ChatApi chatApi;
+@inject NavigationManager nav;
 <RadzenStack class="rz-p-0 ">
 
     <RadzenChat @ref="eventsChat"
@@ -28,6 +29,108 @@
 
 @code {
     [SupplyParameterFromQuery] public string? Contact { get; set; }
+    private bool jsReady;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        nav.LocationChanged += OnLocationChangedAsync;
+        await ParseQueryAsync();
+        // await InitializeChatAsync();
+        users.AddRange(new[]
+        {
+            new ChatUser { Id = "1", Name = "من", Color = "#1976d2" },
+            new ChatUser { Id = "2", Name = Contact, Color = "#388e3c" },
+        });
+        SocketEventDispatcher.Subscribe("getUsers", OnUsers);
+        SocketEventDispatcher.Subscribe("privateChat", OnPrivateChat);
+    }
+
+    private async void OnLocationChangedAsync(object? sender, LocationChangedEventArgs e)
+    {
+        await ParseQueryAsync();
+        await InitializeChatAsync();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task ParseQueryAsync()
+    {
+        var uri = new Uri(nav.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        Contact = query.TryGetValue("Contact", out var val) ? val.ToString() : null;
+
+        return Task.CompletedTask;
+    }
+
+    private async Task InitializeChatAsync()
+    {
+
+
+        messages = new();
+        history = await chatApi.UserChatHistoryWeb();
+        var currentHistory = history.History.FirstOrDefault(u => u.Key == Contact);
+        if (currentHistory.Value != null)
+        {
+            foreach (var item in currentHistory.Value.OrderBy(u => u.CreateDate))
+            {
+                if (item.FromUserName == Contact)
+                {
+                    messages.AddRange(new[]
+            {
+                    new ChatMessage { Content = item.Message, UserId = "2", Timestamp = item.CreateDate },
+                });
+                }
+                else
+                {
+                    messages.AddRange(new[]
+            {
+                    new ChatMessage { Content = item.Message, UserId = "1", Timestamp = item.CreateDate },
+                });
+                }
+            }
+
+        }
+        StateHasChanged();
+    }
+
+
+    private async Task SafeInvokeJsAsync()
+    {
+        if (!jsReady)
+            return; // در هنگام refresh، js هنوز وصل نشده
+
+        try
+        {
+            // مثال از فراخوانی امن به JS
+            // await js.InvokeVoidAsync("console.log", $"JS interop for {contact} executed safely!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"JS error suppressed: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        nav.LocationChanged -= OnLocationChangedAsync;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -38,56 +141,39 @@
     private List<ChatMessage> messages = new();
     private Random random = new();
     private UserChatHistoryWeb history = new();
+    private MyInfoDto? Info;
+
+
+    private List<UserItemDto>? list = new();
 
 
 
-
-
-
-
-
-    protected override void OnInitialized()
+    private void OnUsers(string data)
     {
-        // Initialize users
-        users.AddRange(new[]
-        {
-            new ChatUser { Id = "1", Name = "من", Color = "#1976d2" },
-            new ChatUser { Id = "2", Name = Contact, Color = "#388e3c" },
-        });
+        InvokeAsync(() =>
+    {
+        list = JsonSerializer.Deserialize<List<UserItemDto>>(data);
+        StateHasChanged();
+    });
 
-
-
-        SocketEventDispatcher.Subscribe("privateChat", OnPrivateChat);
 
     }
+
+
+
+
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            history = await chatApi.UserChatHistoryWeb();
-            var currentHistory = history.History.FirstOrDefault(u => u.Key == Contact);
-            if (currentHistory.Value != null)
-            {
-                foreach (var item in currentHistory.Value)
-                {
-                    if (item.FromUserName == Contact)
-                    {
-                        messages.AddRange(new[]
-                {
-                    new ChatMessage { Content = item.Message, UserId = "2", Timestamp = item.CreateDate },
-                });
-                    }
-                    else
-                    {
-                        messages.AddRange(new[]
-                {
-                    new ChatMessage { Content = item.Message, UserId = "1", Timestamp = item.CreateDate },
-                });
-                    }
-                }
 
-            }
-            StateHasChanged();
+            // JSRuntime در رندر اول آماده می‌شود
+            jsReady = true;
+            await InitializeChatAsync();
+            // اگر نیاز به JS بود در همین لحظه درخواست بده
+            await SafeInvokeJsAsync();
         }
     }
 
@@ -100,12 +186,17 @@
         InvokeAsync(() =>
     {
         PrivateChat = JsonSerializer.Deserialize<PrivateChatDto>(data);
+        // if(PrivateChat.==Contact){
+
+        // }
         OnAppendToMessages(PrivateChat);
         StateHasChanged();
     });
 
 
     }
+
+   
     private void OnAddUser()
     {
         var names = new[] { "Emma Davis", "Michael Garcia", "Sarah Martinez", "David Rodriguez", "Lisa Anderson" };
