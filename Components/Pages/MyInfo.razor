@@ -20,10 +20,10 @@ else
                     <RadzenText TextStyle="TextStyle.Body1"><b>@Info.UserName</b></RadzenText>
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">شناسه کاربر</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1"><b>@Info.UserId</b></RadzenText>
-                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">شناسه سوکت</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@Info.SocketId</b></RadzenText>
+                    @* <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">شناسه سوکت</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@Info.SocketId</b></RadzenText> *@
 
-                    <button class="btn btn-outline-success mt-2" @onclick="LogOut">خروج از حساب</button>
+                    <button class="btn btn-danger mt-2" @onclick="LogOut">خروج از حساب</button>
                 </RadzenStack>
             </RadzenStack>
         </RadzenCard>
@@ -47,10 +47,6 @@ else
         StateHasChanged();
     });
 
-
-        // Info = JsonSerializer.Deserialize<MyInfoDto>(data); ;
-        // StateHasChanged();
-        // Console.WriteLine($"📩 Private chat: {data}");
     }
     public async Task LogOut()
     {

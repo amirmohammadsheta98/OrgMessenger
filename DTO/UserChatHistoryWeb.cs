@@ -36,5 +36,11 @@
         [JsonProperty("history")]
         public Dictionary<string, List<ChatHistory>> History { get; set; }
     }
+    
+    public class ContactDto
+    {
+        public string UserName { get; set; }
+        public bool IsOnline { get; set; } 
+    }
 
 }

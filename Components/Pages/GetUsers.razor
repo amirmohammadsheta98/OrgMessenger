@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.IdentityModel.JsonWebTokens
 @using OrgMessenger.DTO
+@using OrgMessenger.Services.ApiReq
 @using OrgMessenger.Services.Sockets
 @using Shop.Security
 @using Shop.Services
@@ -17,12 +18,18 @@
 @inject AuthService authService;
 @inject JWTAuthenticationStateProvider authStateProvider;
 @inject NavigationManager nav;
- @foreach (var contact in list)
+@inject ChatApi chatApi;
+
+ @foreach (var contact in Cantacts)
 {
-    <RadzenPanelMenuItem Text="@contact.Username"
-                         Icon="contacts_product"
-                         Click="@(() => nav.NavigateTo($"/Chat?Contact={contact.Username}"))" />
-   
+    if(contact.IsOnline){
+        <RadzenPanelMenuItem Icon="contacts_product" IconColor="green" Text="@contact.UserName"
+                             Click="@(() => nav.NavigateTo($"/Chat?Contact={contact.UserName}"))" />
+    }
+   else{
+        <RadzenPanelMenuItem Icon="contacts_product" IconColor="gray" Text="@contact.UserName"
+                             Click="@(() => nav.NavigateTo($"/Chat?Contact={contact.UserName}"))" />
+   }
 }
 @code {
     private void NavigateToContact(string username)
@@ -31,22 +38,46 @@
     }
 }
 @code {
-    private List<UserItemDto>? list = new();
+    private List<UserItemDto>? onlineList = new();
+    private UserChatHistoryWeb userList = new();
+    private List<ContactDto> Cantacts = new();
 
     protected override void OnInitialized()
     {
         SocketEventDispatcher.Subscribe("getUsers", OnUsers);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender){
+        if(firstRender){
+            userList = await chatApi.UserChatHistoryWeb();
+            await ShowCantacts();
+        }
+    }
+
+
+
+
     private void OnUsers(string data)
     {
         InvokeAsync(() =>
     {
-        list = JsonSerializer.Deserialize<List<UserItemDto>>(data);
-        StateHasChanged();
+        onlineList = JsonSerializer.Deserialize<List<UserItemDto>>(data);
+
     });
+        
+    }
 
 
+    private async Task ShowCantacts(){
+        foreach (var item in userList.History)
+        {
+            Cantacts.Add(new ContactDto()
+            {
+                UserName=item.Key,
+                IsOnline=onlineList.Any(u=>u.Username==item.Key)
+            });
+        }
+        StateHasChanged();
     }
 }
 

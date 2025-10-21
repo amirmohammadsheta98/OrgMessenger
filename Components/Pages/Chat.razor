@@ -38,11 +38,7 @@
         nav.LocationChanged += OnLocationChangedAsync;
         await ParseQueryAsync();
         // await InitializeChatAsync();
-        users.AddRange(new[]
-        {
-            new ChatUser { Id = "1", Name = "من", Color = "#1976d2" },
-            new ChatUser { Id = "2", Name = Contact, Color = "#388e3c" },
-        });
+
         SocketEventDispatcher.Subscribe("getUsers", OnUsers);
         SocketEventDispatcher.Subscribe("privateChat", OnPrivateChat);
     }
@@ -66,8 +62,12 @@
 
     private async Task InitializeChatAsync()
     {
-
-
+        users = new();
+        users.AddRange(new[]
+        {
+            new ChatUser { Id = "1", Name = "من", Color = "#1976d2" },
+            new ChatUser { Id = "2", Name = Contact, Color = "#388e3c" },
+        });
         messages = new();
         history = await chatApi.UserChatHistoryWeb();
         var currentHistory = history.History.FirstOrDefault(u => u.Key == Contact);
@@ -116,23 +116,6 @@
     {
         nav.LocationChanged -= OnLocationChangedAsync;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     RadzenChat eventsChat;
 
