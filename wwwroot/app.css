@@ -175,7 +175,7 @@ rz-value-axis {
     }
 .rz-body {
     background-color: unset !important;
-    background-image: url(/Images/Background.jpg) !important;
+    background-image: url(/Images/background.jpg) !important;
     background-size: cover !important;
 }
 .rz-chat-messages {
